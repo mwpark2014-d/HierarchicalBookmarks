@@ -23,11 +23,18 @@ def create_item(bookmark):
 
     return item
 
+def get_children(bookmarks, sub_query):
+    new_bkmrks_obj = next(sub_bookmarks for sub_bookmarks in bookmarks if sub_bookmarks["name"] == sub_query)
+    new_bkmrks_list = new_bkmrks_obj['children']
+    return new_bkmrks_list
+
 def is_match(query, bookmark):
+    substrings = query.split(' ')
     if not query:
         return True
-    if query.lower() in bookmark.get('name', '').lower():
-        return True
+    for substring in substrings:
+        if substring.lower() in bookmark.get('name', '').lower():
+            return True
     return False
 
 file_to_open = os.path.expanduser('~/Library/Application Support/Google/Chrome/Profile 2/Bookmarks')
@@ -36,11 +43,12 @@ with open(file_to_open) as file:
     
 bookmarks = bookmarks_json['roots']['bookmark_bar']['children']
 specific_query = query_args and query_args[-1]
+log = specific_query
 
 for i in range(1, len(query_args)):
-    bookmarks = next(sub_bookmarks for sub_bookmarks in bookmarks if sub_bookmarks["name"] == query_args[i-1])
-    bookmarks = bookmarks['children']
+    bookmarks = get_children(bookmarks, query_args[i-1])
 
+bookmarks = sorted(bookmarks, key=lambda mark:mark.get('type'))
 output_list = [create_item(bookmark) for bookmark in bookmarks if is_match(specific_query, bookmark)]
 
 output = {"items": output_list}

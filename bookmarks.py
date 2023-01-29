@@ -6,25 +6,30 @@ query = sys.argv[1]
 
 bookmarks_json = None
 
+def create_item(bookmark):
+    item = {}
+    item["type"] = "default"
+    item["uid"] = bookmark.get('guid')
+    item["title"] = bookmark.get('name')
+    item["arg"] = bookmark.get('url') or 'https://www.google.com/'
+    item["subtitle"] = bookmark.get('url') or 'Folder'
+    item["autocomplete"] = bookmark.get('name')
+    return item
+
 file_to_open = os.path.expanduser('~/Library/Application Support/Google/Chrome/Profile 2/Bookmarks')
 with open(file_to_open) as file:
     bookmarks_json = json.load(file)
-    print(bookmarks_json)
     
 bookmarks = bookmarks_json['roots']['bookmark_bar']['children']
-folders = [bookmark for bookmark in bookmarks if bookmark['type'] == 'folder']
-print(folders)
+# folders = [bookmark for bookmark in bookmarks if bookmark['type'] == 'folder']
 
-def create_item(title, link="google.com", subtitle=None):
-	item = {}
-	item["type"] = "default"
-	item["title"] = title
-	item["arg"] = link
-	item["subtitle"] = subtitle
-	item["autocomplete"] = title
-	return item
+def autocomplete_predicate(query, bookmark):
+    if not query:
+        return True
+    if query.lower() in bookmark.get('name', '').lower():
+        return True
+    return False
+output_list = [create_item(bookmark) for bookmark in bookmarks if autocomplete_predicate(query, bookmark)]
 
-q = {"items": [create_item(query)]}
-j = json.dumps(q)
-print(j)
-sys.stdout.write(j)
+output = {"items": output_list}
+sys.stdout.write(json.dumps(output))

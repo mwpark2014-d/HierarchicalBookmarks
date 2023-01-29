@@ -11,13 +11,20 @@ bookmarks_json = None
 
 def create_item(bookmark):
     is_folder = bookmark.get('type','') == 'folder'
+
+    autocomplete = bookmark.get('name') 
+    if is_folder:
+        subqueries = query_args[0:-1]
+        subqueries.append(bookmark.get('name'))
+        autocomplete = SEPARATOR.join(subqueries) + SEPARATOR
+
     item = {}
     item["type"] = "default"
     item["uid"] = bookmark.get('guid')
     item["title"] = bookmark.get('name')
     item["arg"] = bookmark.get('url') or ''
     item["subtitle"] = bookmark.get('url') or 'Folder'
-    item["autocomplete"] = bookmark.get('name') if not is_folder else bookmark.get("name") + SEPARATOR
+    item["autocomplete"] = autocomplete
     item["valid"] = not is_folder
     item["icon"] = { "path": "./folder.png" if is_folder else "./link.png" }
 
